@@ -186,53 +186,58 @@ export const ProfileSwitcherModal: React.FC<ProfileSwitcherModalProps> = ({
               </div>
 
               {/* Profiles List */}
-              <div className="space-y-3">
-                {profiles.map((p) => {
-                  const pts = calculatePoints(p.badges);
-                  const isSelected = p.id === currentProfile.id;
+              {profiles.length === 0 ? (
+                <div className="p-8 text-center bg-[#FAF7F2] rounded-2xl border border-[#EADBCE]">
+                  <p className="font-display font-bold text-stone-700 text-sm">No Saved Accounts Yet</p>
+                  <p className="text-xs text-stone-500 mt-1">Enter your public profile URL above or click &quot;Create Account&quot; to save your profile.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {profiles.map((p) => {
+                    const pts = calculatePoints(p.badges);
+                    const isSelected = p.id === currentProfile.id;
 
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => {
-                        onSelectProfile(p.id);
-                        onClose();
-                      }}
-                      className={`p-4 rounded-2xl border cursor-pointer transition flex items-center justify-between group ${
-                        isSelected
-                          ? 'bg-[#FEF3C7] border-[#B45309] ring-2 ring-[#F59E0B]/30'
-                          : 'bg-[#FAF7F2] border-[#EADBCE] hover:bg-[#F4ECE1]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white border border-[#EADBCE] flex items-center justify-center font-display font-bold text-base text-[#B45309] shadow-sm">
-                          {p.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-display font-bold text-sm text-stone-900 group-hover:text-[#B45309] transition-colors">
-                              {p.name}
-                            </span>
-                            {isSelected && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-2 py-0.2 rounded-full border border-[#A7F3D0]">
-                                <UserCheck className="w-3 h-3" /> Active
-                              </span>
-                            )}
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          onSelectProfile(p.id);
+                          onClose();
+                        }}
+                        className={`p-4 rounded-2xl border cursor-pointer transition flex items-center justify-between group ${
+                          isSelected
+                            ? 'bg-[#FEF3C7] border-[#B45309] ring-2 ring-[#F59E0B]/30'
+                            : 'bg-[#FAF7F2] border-[#EADBCE] hover:bg-[#F4ECE1]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white border border-[#EADBCE] flex items-center justify-center font-display font-bold text-base text-[#B45309] shadow-sm">
+                            {p.name.charAt(0).toUpperCase()}
                           </div>
-                          <p className="text-[11px] font-mono text-stone-500 mt-0.5">
-                            {p.badges.length} badges • {pts.currentTier.name}
-                          </p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-display font-bold text-sm text-stone-900 group-hover:text-[#B45309] transition-colors">
+                                {p.name}
+                              </span>
+                              {isSelected && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-2 py-0.2 rounded-full border border-[#A7F3D0]">
+                                  <UserCheck className="w-3 h-3" /> Active
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] font-mono text-stone-500 mt-0.5">
+                              {p.badges.length} badges • {pts.currentTier.name}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <span className="font-pixel text-xs text-[#B45309]">
-                            {pts.totalPoints} PTS
-                          </span>
-                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <span className="font-pixel text-xs text-[#B45309]">
+                              {pts.totalPoints} PTS
+                            </span>
+                          </div>
 
-                        {profiles.length > 1 && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -245,12 +250,12 @@ export const ProfileSwitcherModal: React.FC<ProfileSwitcherModalProps> = ({
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Backup, Import & Export Bar */}
               <div className="mt-6 pt-4 border-t border-[#EADBCE] flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">

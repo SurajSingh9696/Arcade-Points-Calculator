@@ -93,7 +93,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="pt-4 border-t border-[#EADBCE] flex items-center justify-between">
             <button
               onClick={() => {
-                if (window.confirm('Reset all saved profiles and points data to original defaults?')) {
+                if (window.confirm('Clear all saved profiles and reset points data?')) {
                   onResetToDefaults();
                   onClose();
                 }

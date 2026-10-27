@@ -2,13 +2,13 @@ import { UserProfile, ArcadeBadge, BadgeCategory } from '../types/arcade';
 import { INITIAL_PROFILES } from '../data/sampleProfiles';
 import { safeIsoDate } from './scraper';
 
-const PROFILES_STORAGE_KEY = 'arcade_saved_profiles_v2';
-const ACTIVE_PROFILE_ID_KEY = 'arcade_active_profile_id_v2';
-const SKILL_RATIO_KEY = 'arcade_skill_ratio_v2';
+const PROFILES_STORAGE_KEY = 'arcade_saved_profiles_v3';
+const ACTIVE_PROFILE_ID_KEY = 'arcade_active_profile_id_v3';
+const SKILL_RATIO_KEY = 'arcade_skill_ratio_v3';
 
 // In-memory fallback if localStorage is disabled or throws
 let inMemoryProfiles: UserProfile[] = INITIAL_PROFILES;
-let inMemoryActiveId: string = INITIAL_PROFILES[0].id;
+let inMemoryActiveId: string = '';
 let inMemorySkillRatio: number = 2;
 
 /**
@@ -77,31 +77,26 @@ export function validateProfile(raw: any, fallbackIndex: number): UserProfile | 
 
 export function getSavedProfiles(): UserProfile[] {
   try {
-    // Purge deprecated v1 dummy storage if present
+    // Purge any deprecated legacy sample profiles from previous versions
     if (localStorage.getItem('arcade_saved_profiles_v1')) {
       localStorage.removeItem('arcade_saved_profiles_v1');
       localStorage.removeItem('arcade_active_profile_id_v1');
     }
+    if (localStorage.getItem('arcade_saved_profiles_v2')) {
+      localStorage.removeItem('arcade_saved_profiles_v2');
+      localStorage.removeItem('arcade_active_profile_id_v2');
+    }
 
     const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(INITIAL_PROFILES));
-      localStorage.setItem(ACTIVE_PROFILE_ID_KEY, INITIAL_PROFILES[0].id);
-      return INITIAL_PROFILES;
+      return [];
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
       const sanitized = parsed.map((p, i) => validateProfile(p, i)).filter((p): p is UserProfile => p !== null);
-      if (sanitized.length > 0) {
-        // If the primary profile has 0 badges from an earlier empty state, hydrate with INITIAL_PROFILES[0].badges
-        if (sanitized[0].id === 'profile-primary' && sanitized[0].badges.length === 0 && INITIAL_PROFILES[0].badges.length > 0) {
-          sanitized[0].badges = INITIAL_PROFILES[0].badges;
-          localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(sanitized));
-        }
-        return sanitized;
-      }
+      return sanitized;
     }
-    return INITIAL_PROFILES;
+    return [];
   } catch (err) {
     console.warn('LocalStorage read failed, using in-memory fallback:', err);
     return inMemoryProfiles;
@@ -122,7 +117,7 @@ export function getActiveProfileId(): string {
     const activeId = localStorage.getItem(ACTIVE_PROFILE_ID_KEY);
     if (activeId) return activeId;
     const profiles = getSavedProfiles();
-    return profiles[0]?.id || INITIAL_PROFILES[0].id;
+    return profiles[0]?.id || '';
   } catch {
     return inMemoryActiveId;
   }
@@ -163,12 +158,11 @@ export function createOrUpdateProfile(newProfile: UserProfile): UserProfile[] {
 export function deleteProfile(id: string): UserProfile[] {
   const currentProfiles = getSavedProfiles();
   const filtered = currentProfiles.filter(p => p.id !== id);
-  const remaining = filtered.length > 0 ? filtered : INITIAL_PROFILES;
-  saveProfiles(remaining);
+  saveProfiles(filtered);
   if (getActiveProfileId() === id) {
-    setActiveProfileId(remaining[0].id);
+    setActiveProfileId(filtered[0]?.id || '');
   }
-  return remaining;
+  return filtered;
 }
 
 export function updateProfileBadges(profileId: string, badges: ArcadeBadge[]): UserProfile[] {

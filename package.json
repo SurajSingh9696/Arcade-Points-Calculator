@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "node server.js",
+    "start": "node server.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

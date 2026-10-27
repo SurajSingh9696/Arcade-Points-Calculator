@@ -39,7 +39,7 @@ export const ScoreOverviewCard: React.FC<ScoreOverviewCardProps> = ({
               {currentTier.name} ({currentTier.badgeLevel})
             </span>
             <span className="text-xs font-mono text-stone-500">
-              Profile: <span className="font-semibold text-stone-800">{currentProfile.name}</span>
+              Profile: <span className="font-semibold text-stone-800">{currentProfile.id ? currentProfile.name : 'Unlinked Account'}</span>
             </span>
           </div>
 

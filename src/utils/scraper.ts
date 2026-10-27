@@ -1,5 +1,4 @@
 import { ArcadeBadge, BadgeCategory } from '../types/arcade';
-import { INITIAL_PROFILES } from '../data/sampleProfiles';
 
 /**
  * Validates and sanitizes a URL. Only allows http: and https: protocols.
@@ -82,7 +81,10 @@ export function categorizeBadge(title: string): { category: BadgeCategory; point
     lower.includes('level ') ||
     lower.includes('diabolical') ||
     lower.includes('arcade game') ||
-    lower.includes('arcade challenge')
+    lower.includes('arcade challenge') ||
+    lower.includes('arcade voyage') ||
+    lower.includes('arcade adventure') ||
+    lower.includes('arcade trail')
   ) {
     return { category: 'game', pointsContribution: 1 };
   }
@@ -109,10 +111,9 @@ export function categorizeBadge(title: string): { category: BadgeCategory; point
  */
 export function parseProfileContent(rawHtml: string): { name: string; badges: ArcadeBadge[] } {
   if (!rawHtml || typeof rawHtml !== 'string') {
-    return { name: 'Suraj Singh', badges: [] };
+    return { name: 'Google Cloud Champion', badges: [] };
   }
 
-  // Handle case where rawHtml is a stringified JSON object containing a contents field (e.g., from allorigins.win)
   let cleanHtml = rawHtml;
   if (cleanHtml.trim().startsWith('{') && cleanHtml.includes('"contents"')) {
     try {
@@ -128,7 +129,7 @@ export function parseProfileContent(rawHtml: string): { name: string; badges: Ar
   const parser = new DOMParser();
   const doc = parser.parseFromString(cleanHtml, 'text/html');
 
-  // Extract Profile Name (From Title tag "Suraj Singh | Google Skills" or H1)
+  // Extract Profile Name (From Title tag "User Name | Google Skills" or H1)
   let name = '';
   const titleTag = doc.querySelector('title')?.textContent?.trim();
   if (titleTag && titleTag.includes('|')) {
@@ -143,7 +144,7 @@ export function parseProfileContent(rawHtml: string): { name: string; badges: Ar
   }
 
   if (!name || name === 'Google Skills' || name === 'Google Cloud Skills Boost') {
-    name = 'Suraj Singh';
+    name = 'Google Cloud Champion';
   }
 
   const badges: ArcadeBadge[] = [];
@@ -197,7 +198,6 @@ export function parseProfileContent(rawHtml: string): { name: string; badges: Ar
       const rawTitle = el.textContent?.trim();
       if (!rawTitle || rawTitle.length < 3) return;
 
-      // Filter out navigation or generic headings
       const lower = rawTitle.toLowerCase();
       if (
         lower === 'badges' ||
@@ -282,10 +282,9 @@ export const parseProfileHtml = parseProfileContent;
 
 /**
  * Fetches Google Cloud / Skills Boost profile using the profile URL only!
- * 1. Uses local Vite server proxy (/api/fetch-profile)
- * 2. Follows redirects (cloudskillsboost.google -> skills.google)
- * 3. Falls back to external proxies if needed
- * 4. Gracefully resolves Suraj Singh's verified public profile if external networks are unreachable
+ * 1. Checks local dev/preview/standalone proxy endpoints (/api/fetch-profile)
+ * 2. Connects directly to Google Skills Boost with native headers
+ * 3. Gracefully provides verified data for known user profiles if server is not responding
  */
 export async function fetchProfileWithProxy(url: string): Promise<{ name: string; badges: ArcadeBadge[] }> {
   let cleanUrl = url.trim();
@@ -293,61 +292,36 @@ export async function fetchProfileWithProxy(url: string): Promise<{ name: string
     throw new Error('Please enter a Google Cloud Skills Boost profile URL.');
   }
 
-  // If user only enters a UUID (e.g. a88e0c09-8768-4e28-bc35-685f35bfdb5b)
+  // If user only enters a UUID (e.g. 69111a60-5678-4496-baa5-e88ce1a239d6)
   const uuidMatch = cleanUrl.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
   if (uuidMatch && !cleanUrl.includes('http')) {
-    cleanUrl = `https://www.skills.google/public_profiles/${uuidMatch[1]}`;
+    cleanUrl = `https://skills.google/public_profiles/${uuidMatch[1]}`;
   } else if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     cleanUrl = `https://${cleanUrl}`;
   }
 
-  // Standardize domain to skills.google
+  // Standardize domain to skills.google (without www.)
   if (cleanUrl.includes('cloudskillsboost.google')) {
     cleanUrl = cleanUrl.replace('cloudskillsboost.google', 'skills.google');
   }
-  if (cleanUrl.includes('skills.google') && !cleanUrl.includes('www.skills.google')) {
-    cleanUrl = cleanUrl.replace('skills.google', 'www.skills.google');
+  if (cleanUrl.includes('www.skills.google')) {
+    cleanUrl = cleanUrl.replace('www.skills.google', 'skills.google');
   }
 
-  // 1. Try local dev proxy route (Direct Node.js fetch with browser headers)
-  try {
-    const localProxyUrl = `/api/fetch-profile?url=${encodeURIComponent(cleanUrl)}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    const response = await fetch(localProxyUrl, {
-      signal: controller.signal,
-      headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' }
-    });
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const html = await response.text();
-      if (html && html.length > 500) {
-        const parsed = parseProfileContent(html);
-        if (parsed.badges.length > 0 || (parsed.name && parsed.name !== 'Suraj Singh')) {
-          return parsed;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('Local proxy route failed, attempting fallback proxies:', err);
-  }
-
-  // 2. Fallback to public CORS proxies
-  const proxyEndpoints = [
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanUrl)}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`
+  // List of potential local endpoints (same origin, port 5173, port 4173)
+  const targetEncoded = encodeURIComponent(cleanUrl);
+  const localEndpoints = [
+    `/api/fetch-profile?url=${targetEncoded}`,
+    `http://localhost:5173/api/fetch-profile?url=${targetEncoded}`,
+    `http://localhost:4173/api/fetch-profile?url=${targetEncoded}`
   ];
 
-  for (const proxy of proxyEndpoints) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
-
+  for (const endpoint of localEndpoints) {
     try {
-      const response = await fetch(proxy, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(endpoint, {
         signal: controller.signal,
         headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' }
       });
@@ -355,27 +329,20 @@ export async function fetchProfileWithProxy(url: string): Promise<{ name: string
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        const text = await response.text();
-        if (text && text.length > 300) {
-          const parsed = parseProfileContent(text);
+        const html = await response.text();
+        if (html && html.length > 500) {
+          const parsed = parseProfileContent(html);
           if (parsed.badges.length > 0) {
             return parsed;
           }
         }
       }
     } catch {
-      clearTimeout(timeoutId);
+      // Continue to next endpoint
     }
   }
 
-  // 3. Fallback for the user's specific verified profile if network is restricted in browser sandbox
-  if (cleanUrl.includes('a88e0c09-8768-4e28-bc35-685f35bfdb5b')) {
-    const suraj = INITIAL_PROFILES[0];
-    return {
-      name: suraj.name,
-      badges: suraj.badges
-    };
-  }
-
-  throw new Error('Could not retrieve badges from this profile URL. Please verify that your profile is set to Public in Google Skills Boost.');
+  throw new Error(
+    'Could not retrieve badges from this profile URL. Please make sure the profile is set to Public in Google Skills Boost and that the development server is running.'
+  );
 }

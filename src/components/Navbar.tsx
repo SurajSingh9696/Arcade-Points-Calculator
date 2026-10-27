@@ -118,11 +118,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Switch or create account/profile"
             >
               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#FEF3C7] text-[#B45309] flex items-center justify-center font-display font-bold text-xs border border-[#FDE68A]">
-                {currentProfile.name.charAt(0).toUpperCase()}
+                {currentProfile.id ? currentProfile.name.charAt(0).toUpperCase() : '?'}
               </div>
-              <div className="text-left hidden xl:block max-w-[100px] truncate">
+              <div className="text-left hidden xl:block max-w-[120px] truncate">
                 <p className="text-xs font-bold text-stone-800 leading-tight truncate">
-                  {currentProfile.name}
+                  {currentProfile.id ? currentProfile.name : 'Sync Profile'}
                 </p>
                 <p className="text-[10px] font-mono text-stone-500">
                   {currentProfile.badges.length} badges

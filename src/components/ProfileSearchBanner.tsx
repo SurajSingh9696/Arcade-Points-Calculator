@@ -27,8 +27,14 @@ export const ProfileSearchBanner: React.FC<ProfileSearchBannerProps> = ({
 }) => {
   // Pre-fill with user's URL or existing profile URL
   const [profileUrl, setProfileUrl] = useState(
-    currentProfile.profileUrl || 'https://www.skills.google/public_profiles/a88e0c09-8768-4e28-bc35-685f35bfdb5b'
+    currentProfile.profileUrl || ''
   );
+
+  React.useEffect(() => {
+    if (currentProfile.profileUrl) {
+      setProfileUrl(currentProfile.profileUrl);
+    }
+  }, [currentProfile.profileUrl]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
@@ -50,7 +56,7 @@ export const ProfileSearchBanner: React.FC<ProfileSearchBannerProps> = ({
         throw new Error('No public badges were found on this profile URL. Make sure your profile is set to Public in Google Cloud Skills Boost.');
       }
 
-      const finalName = sanitizeText(data.name || 'Suraj Singh', 80);
+      const finalName = sanitizeText(data.name || 'Google Cloud Champion', 80);
       const safeUrl = sanitizeUrl(cleanUrl);
 
       const newProfile: UserProfile = {
@@ -111,24 +117,42 @@ export const ProfileSearchBanner: React.FC<ProfileSearchBannerProps> = ({
         </div>
 
         {/* Current Active Account Chip */}
-        <div className="flex items-center gap-3 bg-[#FAF7F2] p-3 rounded-2xl border border-[#EADBCE] shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-white text-[#B45309] font-display font-bold text-base flex items-center justify-center border border-[#EADBCE] shadow-xs">
-            {currentProfile.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-stone-900 font-display">
-                {currentProfile.name}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-1.5 py-0.2 rounded-full border border-[#A7F3D0]">
-                <UserCheck className="w-2.5 h-2.5" /> Active
-              </span>
+        {currentProfile.id ? (
+          <div className="flex items-center gap-3 bg-[#FAF7F2] p-3 rounded-2xl border border-[#EADBCE] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white text-[#B45309] font-display font-bold text-base flex items-center justify-center border border-[#EADBCE] shadow-xs">
+              {currentProfile.name.charAt(0).toUpperCase()}
             </div>
-            <p className="text-[11px] font-mono text-stone-500 mt-0.5">
-              {currentProfile.badges.length} {currentProfile.badges.length === 1 ? 'badge' : 'badges'} recorded
-            </p>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-stone-900 font-display">
+                  {currentProfile.name}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[9px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-1.5 py-0.2 rounded-full border border-[#A7F3D0]">
+                  <UserCheck className="w-2.5 h-2.5" /> Active
+                </span>
+              </div>
+              <p className="text-[11px] font-mono text-stone-500 mt-0.5">
+                {currentProfile.badges.length} {currentProfile.badges.length === 1 ? 'badge' : 'badges'} recorded
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 bg-[#FAF7F2] p-3 rounded-2xl border border-[#EADBCE] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#FEF3C7] text-[#B45309] font-display font-bold text-base flex items-center justify-center border border-[#FDE68A] shadow-xs">
+              ?
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-stone-700 font-display">
+                  Ready to Connect
+                </span>
+              </div>
+              <p className="text-[11px] font-sans text-stone-500 mt-0.5">
+                Enter your profile URL below
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Profile URL Input Form */}

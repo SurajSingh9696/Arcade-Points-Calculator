@@ -28,6 +28,17 @@ import { SettingsModal } from './components/SettingsModal';
 
 
 
+const EMPTY_PROFILE: UserProfile = {
+  id: '',
+  name: 'No Profile Synced',
+  avatarSeed: 'CloudChallenger',
+  profileUrl: '',
+  lastUpdated: new Date().toISOString().split('T')[0],
+  isCurrent: false,
+  badges: [],
+  seasonTarget: 'Season 2026'
+};
+
 export function App() {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [activeProfileId, setActiveId] = useState<string>('');
@@ -50,14 +61,14 @@ export function App() {
 
   // Current active profile
   const currentProfile = useMemo(() => {
-    if (!profiles || profiles.length === 0) return SAMPLE_PROFILES[0];
+    if (!profiles || profiles.length === 0) return EMPTY_PROFILE;
     const found = profiles.find(p => p.id === activeProfileId);
-    return found || profiles[0];
+    return found || profiles[0] || EMPTY_PROFILE;
   }, [profiles, activeProfileId]);
 
   // Auto-fetch badges if profile has URL but 0 badges
   useEffect(() => {
-    if (currentProfile && currentProfile.profileUrl && currentProfile.badges.length === 0) {
+    if (currentProfile && currentProfile.id && currentProfile.profileUrl && currentProfile.badges.length === 0) {
       fetchProfileWithProxy(currentProfile.profileUrl)
         .then((data) => {
           if (data.badges.length > 0) {
@@ -106,12 +117,29 @@ export function App() {
   };
 
   const handleAddBadge = (badge: ArcadeBadge) => {
+    if (!currentProfile.id) {
+      const newProfile: UserProfile = {
+        id: `profile-${Date.now()}`,
+        name: 'My Cloud Account',
+        avatarSeed: 'MyCloud',
+        profileUrl: '',
+        lastUpdated: new Date().toISOString().split('T')[0],
+        isCurrent: true,
+        badges: [badge],
+        seasonTarget: 'Season 2026'
+      };
+      const updated = createOrUpdateProfile(newProfile);
+      setProfiles(updated);
+      setActiveId(newProfile.id);
+      return;
+    }
     const updatedBadges = [badge, ...currentProfile.badges];
     const updatedProfiles = updateProfileBadges(currentProfile.id, updatedBadges);
     setProfiles(updatedProfiles);
   };
 
   const handleDeleteBadge = (badgeId: string) => {
+    if (!currentProfile.id) return;
     const updatedBadges = currentProfile.badges.filter(b => b.id !== badgeId);
     const updatedProfiles = updateProfileBadges(currentProfile.id, updatedBadges);
     setProfiles(updatedProfiles);
@@ -123,10 +151,10 @@ export function App() {
   };
 
   const handleResetToDefaults = () => {
-    saveProfiles(SAMPLE_PROFILES);
-    setActiveProfileId(SAMPLE_PROFILES[0].id);
-    setProfiles(SAMPLE_PROFILES);
-    setActiveId(SAMPLE_PROFILES[0].id);
+    saveProfiles([]);
+    setActiveProfileId('');
+    setProfiles([]);
+    setActiveId('');
     setSkillRatioState(2);
     setSkillRatio(2);
   };
