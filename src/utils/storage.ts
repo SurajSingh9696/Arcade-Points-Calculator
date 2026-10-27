@@ -1,14 +1,14 @@
 import { UserProfile, ArcadeBadge, BadgeCategory } from '../types/arcade';
-import { SAMPLE_PROFILES } from '../data/sampleProfiles';
+import { INITIAL_PROFILES } from '../data/sampleProfiles';
 import { safeIsoDate } from './scraper';
 
-const PROFILES_STORAGE_KEY = 'arcade_saved_profiles_v1';
-const ACTIVE_PROFILE_ID_KEY = 'arcade_active_profile_id_v1';
-const SKILL_RATIO_KEY = 'arcade_skill_ratio_v1';
+const PROFILES_STORAGE_KEY = 'arcade_saved_profiles_v2';
+const ACTIVE_PROFILE_ID_KEY = 'arcade_active_profile_id_v2';
+const SKILL_RATIO_KEY = 'arcade_skill_ratio_v2';
 
 // In-memory fallback if localStorage is disabled or throws
-let inMemoryProfiles: UserProfile[] = SAMPLE_PROFILES;
-let inMemoryActiveId: string = SAMPLE_PROFILES[0].id;
+let inMemoryProfiles: UserProfile[] = INITIAL_PROFILES;
+let inMemoryActiveId: string = INITIAL_PROFILES[0].id;
 let inMemorySkillRatio: number = 2;
 
 /**
@@ -48,10 +48,10 @@ export function validateProfile(raw: any, fallbackIndex: number): UserProfile | 
   if (!raw || typeof raw !== 'object') return null;
 
   const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id.slice(0, 100) : `prof-${fallbackIndex}`;
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.slice(0, 80) : 'Cloud Champion';
-  const profileUrl = typeof raw.profileUrl === 'string' && raw.profileUrl.startsWith('http')
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.slice(0, 80) : 'My Cloud Account';
+  const profileUrl = typeof raw.profileUrl === 'string'
     ? raw.profileUrl.slice(0, 500)
-    : 'https://www.cloudskillsboost.google/public_profiles/user';
+    : '';
 
   const rawBadges = Array.isArray(raw.badges) ? raw.badges : [];
   const validBadges: ArcadeBadge[] = [];
@@ -77,18 +77,31 @@ export function validateProfile(raw: any, fallbackIndex: number): UserProfile | 
 
 export function getSavedProfiles(): UserProfile[] {
   try {
+    // Purge deprecated v1 dummy storage if present
+    if (localStorage.getItem('arcade_saved_profiles_v1')) {
+      localStorage.removeItem('arcade_saved_profiles_v1');
+      localStorage.removeItem('arcade_active_profile_id_v1');
+    }
+
     const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(SAMPLE_PROFILES));
-      localStorage.setItem(ACTIVE_PROFILE_ID_KEY, SAMPLE_PROFILES[0].id);
-      return SAMPLE_PROFILES;
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(INITIAL_PROFILES));
+      localStorage.setItem(ACTIVE_PROFILE_ID_KEY, INITIAL_PROFILES[0].id);
+      return INITIAL_PROFILES;
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
       const sanitized = parsed.map((p, i) => validateProfile(p, i)).filter((p): p is UserProfile => p !== null);
-      if (sanitized.length > 0) return sanitized;
+      if (sanitized.length > 0) {
+        // If the primary profile has 0 badges from an earlier empty state, hydrate with INITIAL_PROFILES[0].badges
+        if (sanitized[0].id === 'profile-primary' && sanitized[0].badges.length === 0 && INITIAL_PROFILES[0].badges.length > 0) {
+          sanitized[0].badges = INITIAL_PROFILES[0].badges;
+          localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(sanitized));
+        }
+        return sanitized;
+      }
     }
-    return SAMPLE_PROFILES;
+    return INITIAL_PROFILES;
   } catch (err) {
     console.warn('LocalStorage read failed, using in-memory fallback:', err);
     return inMemoryProfiles;
@@ -109,7 +122,7 @@ export function getActiveProfileId(): string {
     const activeId = localStorage.getItem(ACTIVE_PROFILE_ID_KEY);
     if (activeId) return activeId;
     const profiles = getSavedProfiles();
-    return profiles[0]?.id || SAMPLE_PROFILES[0].id;
+    return profiles[0]?.id || INITIAL_PROFILES[0].id;
   } catch {
     return inMemoryActiveId;
   }
@@ -127,7 +140,7 @@ export function setActiveProfileId(id: string): void {
 export function createOrUpdateProfile(newProfile: UserProfile): UserProfile[] {
   const currentProfiles = getSavedProfiles();
   const existingIndex = currentProfiles.findIndex(
-    p => p.id === newProfile.id || (p.profileUrl && p.profileUrl === newProfile.profileUrl)
+    p => p.id === newProfile.id || (p.profileUrl && newProfile.profileUrl && p.profileUrl === newProfile.profileUrl)
   );
 
   let updatedList: UserProfile[];
@@ -150,7 +163,7 @@ export function createOrUpdateProfile(newProfile: UserProfile): UserProfile[] {
 export function deleteProfile(id: string): UserProfile[] {
   const currentProfiles = getSavedProfiles();
   const filtered = currentProfiles.filter(p => p.id !== id);
-  const remaining = filtered.length > 0 ? filtered : SAMPLE_PROFILES;
+  const remaining = filtered.length > 0 ? filtered : INITIAL_PROFILES;
   saveProfiles(remaining);
   if (getActiveProfileId() === id) {
     setActiveProfileId(remaining[0].id);

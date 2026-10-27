@@ -209,11 +209,29 @@ export const BadgesExplorer: React.FC<BadgesExplorerProps> = ({
             );
           })}
         </div>
+      ) : badges.length === 0 ? (
+        <div className="p-8 sm:p-12 text-center bg-[#FAF7F2] rounded-3xl border border-[#EADBCE]">
+          <div className="w-12 h-12 rounded-2xl bg-[#FEF3C7] text-[#B45309] flex items-center justify-center mx-auto mb-3 border border-[#FDE68A] shadow-xs">
+            <Award className="w-6 h-6" />
+          </div>
+          <h4 className="font-display font-bold text-stone-800 text-base sm:text-lg">
+            Your Badges Repository is Empty
+          </h4>
+          <p className="text-stone-600 text-xs sm:text-sm mt-1 max-w-md mx-auto leading-relaxed">
+            Record your completed Arcade Games, Trivia Weeks, and Skill Badges to calculate your verified score and unlock swag milestones.
+          </p>
+          <button
+            onClick={onAddBadgeClick}
+            className="mt-4 px-5 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold font-display rounded-xl shadow-arcade-amber hover:shadow-xs transition"
+          >
+            + Record Your First Badge
+          </button>
+        </div>
       ) : (
         <div className="p-8 sm:p-12 text-center bg-[#FAF7F2] rounded-3xl border border-[#EADBCE]">
           <Award className="w-10 h-10 text-stone-400 mx-auto mb-2 opacity-50" />
           <p className="font-display font-bold text-stone-700 text-sm sm:text-base">No matching badges found</p>
-          <p className="text-stone-500 text-xs mt-1">Try clearing the search filter or add badges to your profile.</p>
+          <p className="text-stone-500 text-xs mt-1">Try clearing the search filter or select &quot;All Badges&quot;.</p>
         </div>
       )}
     </div>

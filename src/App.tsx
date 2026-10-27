@@ -12,6 +12,7 @@ import {
   saveProfiles
 } from './utils/storage';
 import { calculatePoints, analyzeFrequency } from './utils/calculator';
+import { fetchProfileWithProxy } from './utils/scraper';
 import { SAMPLE_PROFILES } from './data/sampleProfiles';
 
 import { Navbar } from './components/Navbar';
@@ -53,6 +54,22 @@ export function App() {
     const found = profiles.find(p => p.id === activeProfileId);
     return found || profiles[0];
   }, [profiles, activeProfileId]);
+
+  // Auto-fetch badges if profile has URL but 0 badges
+  useEffect(() => {
+    if (currentProfile && currentProfile.profileUrl && currentProfile.badges.length === 0) {
+      fetchProfileWithProxy(currentProfile.profileUrl)
+        .then((data) => {
+          if (data.badges.length > 0) {
+            const updatedProfiles = updateProfileBadges(currentProfile.id, data.badges);
+            setProfiles(updatedProfiles);
+          }
+        })
+        .catch((err) => {
+          console.warn('Auto-fetch initial profile failed:', err);
+        });
+    }
+  }, [currentProfile.id, currentProfile.profileUrl, currentProfile.badges.length]);
 
   // Points breakdown calculation
   const pointsBreakdown = useMemo(() => {
@@ -135,7 +152,7 @@ export function App() {
         <ProfileSearchBanner
           currentProfile={currentProfile}
           onProfileLoaded={handleProfileLoadedFromSearch}
-          onSelectSample={handleSelectProfile}
+          onOpenAddBadge={() => setIsAddBadgeOpen(true)}
         />
 
         {/* Dynamic Content Views based on active tab */}
@@ -153,6 +170,7 @@ export function App() {
             <BadgeFrequencySection
               frequency={frequencyAnalysis}
               breakdown={pointsBreakdown}
+              onOpenAddBadge={() => setIsAddBadgeOpen(true)}
             />
 
             {/* Pace Simulator Shortcut */}
@@ -165,6 +183,7 @@ export function App() {
             <BadgeFrequencySection
               frequency={frequencyAnalysis}
               breakdown={pointsBreakdown}
+              onOpenAddBadge={() => setIsAddBadgeOpen(true)}
             />
             <PaceSimulator breakdown={pointsBreakdown} />
           </div>
