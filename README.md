@@ -105,19 +105,21 @@ Calculates Google Cloud Arcade Points based strictly on official seasonal rules:
    # or: npm install
    ```
 
-3. **Start the development server**:
+3. **Start the local server**:
    ```bash
    pnpm run dev
-   # or: npm run dev
+   # or for production standalone server:
+   pnpm run build
+   node server.js
    ```
    Open your browser at `http://localhost:5173/`.
 
-4. **Build for production**:
-   ```bash
-   pnpm run build
-   # or: npm run build
-   ```
-   The production-optimized bundle is compiled into the `dist/` directory.
+4. **Deploying to Vercel**:
+   This project is pre-configured for 1-click deployment on [Vercel](https://vercel.com/):
+   * Push your repository to GitHub / GitLab / Bitbucket.
+   * Import the project on Vercel (framework preset: **Vite**).
+   * Vercel will automatically build the frontend into `dist/` and deploy the Serverless Function at `/api/fetch-profile` to handle profile fetching seamlessly without CORS limitations.
+
 
 ---
 

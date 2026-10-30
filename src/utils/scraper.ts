@@ -333,28 +333,45 @@ export async function fetchProfileWithProxy(url: string): Promise<{ name: string
           return parsed;
         }
         throw new Error(
-          'Profile page loaded but no badges were detected. Make sure your Google Skills Boost profile is set to Public.'
+          'Profile page was loaded, but no badges were detected. Please ensure your Google Cloud Skills Boost profile is set to "Public" and has completed badges.'
         );
       }
     }
 
+    // Try reading JSON error from backend proxy
+    let backendError = '';
+    try {
+      const errJson = await response.json();
+      if (errJson && errJson.error) {
+        backendError = errJson.error;
+      }
+    } catch {
+      // not JSON
+    }
+
+    if (backendError) {
+      throw new Error(backendError);
+    }
+
     if (response.status === 404) {
-      throw new Error(
-        'Server proxy not running. Please start the server with: node server.js — then open http://localhost:5173 in your browser.'
-      );
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (isLocal) {
+        throw new Error('Local server is not running. Please run "node server.js" in the project directory.');
+      }
+      throw new Error('Server proxy not found (404). Please verify that the API functions were deployed.');
     }
 
     throw new Error(
-      `Profile server returned status ${response.status}. The profile may be private or the URL is incorrect.`
+      `Could not load profile (HTTP ${response.status}). Please check your URL and ensure the profile is set to Public.`
     );
   } catch (err: any) {
-    // Re-throw errors we threw ourselves
-    if (err?.message && !err.message.includes('fetch')) {
+    if (err?.message && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
       throw err;
     }
-    // Network/abort errors mean the proxy server is not running
-    throw new Error(
-      'Cannot reach the profile proxy server. Start it with: node server.js — then open http://localhost:5173 in your browser.'
-    );
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (isLocal) {
+      throw new Error('Could not connect to the local server. Please run "node server.js" in the terminal.');
+    }
+    throw new Error('Network connection error while contacting profile proxy. Please check your internet connection.');
   }
 }
