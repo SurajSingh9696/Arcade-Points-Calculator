@@ -308,41 +308,53 @@ export async function fetchProfileWithProxy(url: string): Promise<{ name: string
     cleanUrl = cleanUrl.replace('www.skills.google', 'skills.google');
   }
 
-  // List of potential local endpoints (same origin, port 5173, port 4173)
+  // Only use the relative /api/fetch-profile endpoint.
+  // This works when served by either `pnpm run dev` (Vite middleware) or `node server.js` (standalone).
+  // Never use absolute localhost URLs — they trigger Windows Firewall permission prompts.
   const targetEncoded = encodeURIComponent(cleanUrl);
-  const localEndpoints = [
-    `/api/fetch-profile?url=${targetEncoded}`,
-    `http://localhost:5173/api/fetch-profile?url=${targetEncoded}`,
-    `http://localhost:4173/api/fetch-profile?url=${targetEncoded}`
-  ];
+  const endpoint = `/api/fetch-profile?url=${targetEncoded}`;
 
-  for (const endpoint of localEndpoints) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-      const response = await fetch(endpoint, {
-        signal: controller.signal,
-        headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' }
-      });
+    const response = await fetch(endpoint, {
+      signal: controller.signal,
+      headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml' }
+    });
 
-      clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
 
-      if (response.ok) {
-        const html = await response.text();
-        if (html && html.length > 500) {
-          const parsed = parseProfileContent(html);
-          if (parsed.badges.length > 0) {
-            return parsed;
-          }
+    if (response.ok) {
+      const html = await response.text();
+      if (html && html.length > 500) {
+        const parsed = parseProfileContent(html);
+        if (parsed.badges.length > 0) {
+          return parsed;
         }
+        throw new Error(
+          'Profile page loaded but no badges were detected. Make sure your Google Skills Boost profile is set to Public.'
+        );
       }
-    } catch {
-      // Continue to next endpoint
     }
-  }
 
-  throw new Error(
-    'Could not retrieve badges from this profile URL. Please make sure the profile is set to Public in Google Skills Boost and that the development server is running.'
-  );
+    if (response.status === 404) {
+      throw new Error(
+        'Server proxy not running. Please start the server with: node server.js — then open http://localhost:5173 in your browser.'
+      );
+    }
+
+    throw new Error(
+      `Profile server returned status ${response.status}. The profile may be private or the URL is incorrect.`
+    );
+  } catch (err: any) {
+    // Re-throw errors we threw ourselves
+    if (err?.message && !err.message.includes('fetch')) {
+      throw err;
+    }
+    // Network/abort errors mean the proxy server is not running
+    throw new Error(
+      'Cannot reach the profile proxy server. Start it with: node server.js — then open http://localhost:5173 in your browser.'
+    );
+  }
 }

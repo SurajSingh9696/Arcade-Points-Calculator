@@ -128,6 +128,6 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, 'localhost', () => {
   console.log(`🕹️ Arcade Calculator running at http://localhost:${PORT}/`);
 });

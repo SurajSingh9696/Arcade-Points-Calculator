@@ -85,9 +85,17 @@ export const ProfileSearchBanner: React.FC<ProfileSearchBannerProps> = ({
         text: `Found profile for "${newProfile.name}"! Loaded ${data.badges.length} verified Google Cloud badges. Your points are calculated and saved!`
       });
     } catch (err: any) {
+      const rawMsg: string = err?.message || '';
+      const isServerDown =
+        rawMsg.includes('node server.js') ||
+        rawMsg.includes('proxy server') ||
+        rawMsg.includes('Cannot reach');
+
       setStatusMessage({
         type: 'error',
-        text: err?.message || 'Could not fetch profile. Please check the URL and ensure your profile is set to Public.'
+        text: isServerDown
+          ? '⚡ Server not running — open a terminal in the project folder and run: node server.js — then refresh and try again.'
+          : rawMsg || 'Could not fetch profile. Check the URL and ensure your profile is set to Public in Google Skills Boost.'
       });
     } finally {
       setIsLoading(false);
