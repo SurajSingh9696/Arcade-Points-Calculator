@@ -39,6 +39,10 @@ export const SwagMilestones: React.FC<SwagMilestonesProps> = ({ breakdown }) => 
           <p className="text-stone-600 text-xs sm:text-sm mt-1">
             Official reward packages redeemable during the Google Cloud Arcade Prize Counter distribution window.
           </p>
+          <div className="mt-2.5 p-3 rounded-2xl bg-[#FAF7F2] border border-[#EADBCE] text-[11px] text-stone-600 flex items-start sm:items-center gap-2">
+            <span className="font-bold text-[#B45309] shrink-0">🌊 Waterfall Redemption:</span>
+            <span>Prize Counter slots are first-come, first-served. If a higher tier reaches capacity, claims safely roll down to the next tier below, ensuring your points always count!</span>
+          </div>
         </div>
       </div>
 

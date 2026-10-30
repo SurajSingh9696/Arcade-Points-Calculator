@@ -62,15 +62,17 @@ Calculates Google Cloud Arcade Points based strictly on official seasonal rules:
 
 ---
 
-## 🏆 Swag Tiers & Reward Roadmap
+## 🏆 Swag Tiers & Reward Roadmap (Official Prize Counter)
 
-| Tier | Min Points | Badge Level | Example Official Rewards |
+| Tier | Points Threshold | Badge Level | Example Official Rewards |
 | :--- | :---: | :---: | :--- |
-| **Explorer** | $0\text{ pts}$ | Bronze Token | Digital Certificate, Skills Boost Profile Badge |
-| **Standard** | $10\text{ pts}$ | Silver Token | Official Arcade Cotton T-Shirt, Vinyl Stickers, Enamel Pins |
-| **Advanced** | $25\text{ pts}$ | Gold Token | Embroidered Heavyweight Hoodie, Matte Steel Water Bottle, Journal |
-| **Premium** | $45\text{ pts}$ | Emerald Medallion | Laptop Backpack, Qi-Wireless Charging Pad, Desk Mat, $50 Exam Voucher |
-| **Legend** | $65+\text{ pts}$ | Royal Crown | Arcade Varsity Bomber Jacket, Bluetooth Speaker, Keycaps, 100% Exam Voucher |
+| **Novice** | $0–49\text{ pts}$ | Starter Bronze | Digital Certificate, Skills Boost Profile Badge, Community Ranking |
+| **Arcade Trooper** | $50–74\text{ pts}$ | Silver Trooper | Official 2026 Arcade Cotton T-Shirt, Insulated Water Bottle, Vinyl Stickers, Enamel Pins |
+| **Arcade Ranger** | $75–94\text{ pts}$ | Gold Ranger | Heavyweight Embroidered Hoodie, Ergonomic Laptop Backpack, Tech Journal, Cable Organizer |
+| **Arcade Champion** | $95–119\text{ pts}$ | Emerald Champion | Dual Qi-Wireless Charger, Waterproof Bluetooth Speaker, Snapback Cap, Desk Mat, \$50 Exam Voucher |
+| **Arcade Legend** | $120+\text{ pts}$ | Royal Prismatic Crown | Arcade Varsity Bomber Jacket (Numbered & Embroidered), Mechanical Keycaps, 100% Exam Voucher (\$200), Engraved Plaque |
+
+> 🌊 **Waterfall Redemption System:** Prize counter redemption slots operate on a first-come, first-served basis with capped pools. If a higher tier reaches maximum redemption capacity, claims safely roll down to the next eligible tier pool, ensuring your hard-earned points always earn physical swag!
 
 ---
 
